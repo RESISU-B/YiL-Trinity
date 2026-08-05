@@ -28,14 +28,15 @@ Open http://localhost:8090 in Chrome.
 - Walk into the **red zone** → screen flashes red, `player-hit` logged in console
 - Add `?debug` to the URL to see the player hitboxes (lime wireframes)
 
-### Test on Quest
+### Test on Quest (via GitHub Pages)
 
-WebXR needs HTTPS *except* on localhost, so tunnel over USB:
+WebXR requires HTTPS, so the headset loads the deployed site — no dev mode needed:
 
-1. Enable developer mode on the Quest, connect USB, allow debugging
-2. `adb reverse tcp:8090 tcp:8090`
-3. Open `http://localhost:8090` in the Quest browser → Enter VR
-4. **Left stick** walks, **grip** grabs the orange crate, **trigger** on the green lever toggles the lamp, walking into the red zone flashes + vibrates
+1. Push to `main` — GitHub Pages redeploys automatically (takes ~1 min)
+2. Open **https://resisu-b.github.io/YiL-Trinity/** in the Quest browser → Enter VR
+3. **Left stick** walks, **grip** grabs the orange crate, **trigger** on the green lever toggles the lamp, walking into the red zone flashes + vibrates
+
+One-time setup (repo admin): GitHub → Settings → Pages → Source: *Deploy from a branch* → Branch: `main`, folder `/ (root)` → Save.
 
 ## Project layout
 

@@ -40,7 +40,7 @@ AFRAME.registerComponent('hazard-trench', {
     if (this.collapsed || GAME.shored) return;
     const p = this.rig.object3D.position;
     // inside the trench, below grade
-    if (p.y < -0.8 && p.x > -2 && p.x < 2 && p.z < -52 && p.z > -58) {
+    if (p.y < -0.5 && p.x > -2.3 && p.x < 2.3 && p.z < -51.5 && p.z > -58.5) {
       this.collapsed = true;
       const scene = this.el;
       const e = document.querySelector('#trench-wall-e');

@@ -7,6 +7,8 @@
 AFRAME.registerComponent('hazard-loto', {
   init: function () {
     const scene = this.el;
+    this.rig = document.querySelector('#rig');
+    this.hurtCooldown = 0;
     const breaker = document.querySelector('#breaker');
     const hook = document.querySelector('#tag-hook');
     const tag = document.querySelector('#tag');
@@ -78,5 +80,19 @@ AFRAME.registerComponent('hazard-loto', {
         });
       }
     });
+  },
+
+  // standing against the running flywheel is itself dangerous
+  tick: function (t) {
+    if (this.done || GAME.breakerOff || t < this.hurtCooldown) return;
+    const p = this.rig.object3D.position;
+    const dx = p.x - (-1.3), dz = p.z - (-33);
+    if (Math.sqrt(dx * dx + dz * dz) < 1.2) {
+      this.hurtCooldown = t + 3000;
+      this.el.emit('fail', {
+        text: 'You got caught by the running machinery! Keep clear until it is locked out.',
+        respawn: '0 0 -28'
+      });
+    }
   }
 });

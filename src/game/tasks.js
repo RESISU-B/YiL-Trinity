@@ -26,6 +26,21 @@ AFRAME.registerComponent('game-manager', {
       '<div id="hud-toast" style="margin-top:6px;color:#ffd54f;font-weight:600"></div>';
     document.body.appendChild(hud);
 
+    // fullscreen blood splatter shown on any death
+    const blood = document.createElement('div');
+    blood.style.cssText =
+      'position:fixed;inset:0;z-index:9998;pointer-events:none;opacity:0;' +
+      'transition:opacity .15s ease-in;' +
+      'background:' +
+      'radial-gradient(circle at 18% 25%, rgba(140,0,0,.85) 0 4%, transparent 9%),' +
+      'radial-gradient(circle at 78% 18%, rgba(120,0,0,.8) 0 6%, transparent 12%),' +
+      'radial-gradient(circle at 60% 70%, rgba(150,0,0,.8) 0 5%, transparent 11%),' +
+      'radial-gradient(circle at 30% 80%, rgba(120,0,0,.75) 0 7%, transparent 13%),' +
+      'radial-gradient(circle at 88% 60%, rgba(140,0,0,.8) 0 4%, transparent 10%),' +
+      'radial-gradient(ellipse at center, transparent 35%, rgba(90,0,0,.9) 100%)';
+    document.body.appendChild(blood);
+    this.blood = blood;
+
     this.objectives = [
       '1/3 FALL PROTECTION — Climb the scaffold ramp. USE the yellow anchor ring to clip your harness, then cross the plank to the green flag.',
       '2/3 LOCKOUT / TAGOUT — At the substation: shut off the BREAKER, hang the red TAG, and only then open the service panel.',
@@ -40,6 +55,9 @@ AFRAME.registerComponent('game-manager', {
     scene.addEventListener('fail', (e) => {
       GAME.strikes++;
       scene.emit('player-hit', { part: 'accident' });
+      this.blood.style.opacity = '1';
+      clearTimeout(this.bt);
+      this.bt = setTimeout(() => { this.blood.style.opacity = '0'; }, 1400);
       this.toast('⚠ ' + e.detail.text + '  (strike ' + GAME.strikes + ')');
       if (e.detail.respawn) {
         document.querySelector('#rig').setAttribute('position', e.detail.respawn);

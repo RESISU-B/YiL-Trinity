@@ -30,10 +30,11 @@
       <img id="tex-facade" src="assets/textures/facade.jpg">
       <img id="tex-machine" src="assets/textures/machine.jpg">
       <img id="tex-foliage" src="assets/textures/foliage.jpg">
+      <img id="tex-skyline" src="assets/textures/skyline.jpg">
     </a-assets>
 
-    <a-sky color="#9fbfdc"></a-sky>
-    <a-sphere position="60 45 -80" radius="4" color="#fff7d6" material="shader: flat"></a-sphere>
+    <!-- skyline panorama: the whole site sits on top of a high-rise -->
+    <a-sky src="#tex-skyline" material="fog: false"></a-sky>
 
     <!-- ================= GROUND (dirt site, grass surroundings, trench hole) -->
     <!-- trench footprint: x [-2,2], z [-52,-58] -->

@@ -25,7 +25,7 @@ AFRAME.registerComponent('hazard-fall', {
       if (!fromScaffold || !GAME.anchored) return;
       // rope catch: brief drop, then hauled back onto the platform
       setTimeout(() => {
-        this.rig.setAttribute('position', '0 3.06 -14');
+        this.rig.setAttribute('position', '0 6.06 -14');
         scene.emit('toast', { text: 'Your lanyard caught you! That anchor just saved your life.' });
       }, 350);
     });

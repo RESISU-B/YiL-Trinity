@@ -6,60 +6,207 @@
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.5.4/dist/aframe-extras.min.js"></script>
   <script src="https://unpkg.com/aframe-aabb-collider-component@3.2.0/dist/aframe-aabb-collider-component.min.js"></script>
+  <script src="src/components/kinematics.js"></script>
   <script src="src/components/player-hitboxes.js"></script>
   <script src="src/components/usable.js"></script>
   <script src="src/game/tasks.js"></script>
-  <script src="src/game/hazards.js"></script>
+  <script src="src/game/hazards/fall.js"></script>
+  <script src="src/game/hazards/loto.js"></script>
+  <script src="src/game/hazards/trench.js"></script>
 </head>
 <body>
-  <a-scene>
-    <a-sky color="#87CEEB"></a-sky>
+  <a-scene game-manager hazard-fall hazard-loto hazard-trench
+           fog="type: linear; color: #b8c6d1; near: 25; far: 90"
+           shadow="type: pcfsoft">
+    <a-sky color="#9fbfdc"></a-sky>
+    <a-sphere position="60 45 -80" radius="4" color="#fff7d6"
+              material="shader: flat"></a-sphere>
 
-    <!-- Empty world: ground + a few orientation markers -->
-    <a-plane rotation="-90 0 0" width="100" height="100" color="#8a7f6a"></a-plane>
-    <a-box position="0 0.5 -8" depth="1" height="1" width="1" color="#c0392b"></a-box>
-    <a-cylinder position="6 1 -4" radius="0.3" height="2" color="#2c3e50"></a-cylinder>
-    <a-cylinder position="-6 1 -4" radius="0.3" height="2" color="#2c3e50"></a-cylinder>
+    <!-- ================= GROUND (with a hole for the trench) ================ -->
+    <!-- trench footprint: x [-2,2], z [-52,-58] -->
+    <a-plane class="walkable" rotation="-90 0 0" position="0 0 -11"
+             width="120" height="82" color="#8a7f6a" shadow="receive: true"></a-plane>
+    <a-plane class="walkable" rotation="-90 0 0" position="0 0 -70"
+             width="120" height="24" color="#8a7f6a" shadow="receive: true"></a-plane>
+    <a-plane class="walkable" rotation="-90 0 0" position="-31 0 -55"
+             width="58" height="6" color="#8a7f6a" shadow="receive: true"></a-plane>
+    <a-plane class="walkable" rotation="-90 0 0" position="31 0 -55"
+             width="58" height="6" color="#8a7f6a" shadow="receive: true"></a-plane>
 
-    <a-entity light="type: ambient; intensity: 0.6"></a-entity>
-    <a-entity light="type: directional; intensity: 0.8" position="1 4 2"></a-entity>
+    <a-entity light="type: ambient; color: #cfd8e6; intensity: 0.65"></a-entity>
+    <a-entity light="type: directional; intensity: 0.9; castShadow: true;
+                     shadowCameraLeft: -40; shadowCameraRight: 40;
+                     shadowCameraTop: 40; shadowCameraBottom: -40"
+              position="18 30 8"></a-entity>
 
-    <!-- ======== PLAYER RIG ======== -->
-    <!-- movement-controls (aframe-extras): left thumbstick in VR, WASD on desktop -->
-    <a-entity id="rig" movement-controls="speed: 0.25; fly: false" player-hitboxes>
+    <!-- ================= PLAYER RIG ================ -->
+    <a-entity id="rig" movement-controls="speed: 0.3; fly: false"
+              simple-gravity player-hitboxes position="0 0 4">
       <a-entity id="head" camera look-controls position="0 1.6 0">
-        <!-- desktop fallback: mouse click to interact/use -->
-        <a-entity cursor="rayOrigin: mouse" raycaster="objects: .interactable"></a-entity>
-        <!-- red flash on hazard hit -->
+        <a-entity cursor="rayOrigin: mouse" raycaster="objects: .interactable; far: 30"></a-entity>
         <a-plane damage-flash position="0 0 -0.3" width="1" height="1"
                  material="color: red; transparent: true; opacity: 0; depthTest: false"></a-plane>
       </a-entity>
-
-      <!-- Hands: grip = grab, trigger = use (see hand-interactor in usable.js) -->
       <a-entity id="handL" hand-controls="hand: left" hand-interactor></a-entity>
       <a-entity id="handR" hand-controls="hand: right" hand-interactor></a-entity>
     </a-entity>
 
-    <!-- ======== TEST OBJECTS (delete later) ======== -->
-    <!-- grabbable crate: grip near it in VR to pick up -->
-    <a-box class="interactable" grabbable hoverable usable
-           position="0.6 1.1 -1.5" depth="0.3" height="0.3" width="0.3" color="#e67e22"></a-box>
-    <!-- usable lever: trigger in VR / click on desktop toggles the lamp -->
-    <a-box id="lever" class="interactable" hoverable usable
-           position="-0.8 1 -1.5" depth="0.2" height="0.4" width="0.2" color="#27ae60"></a-box>
-    <a-sphere id="lamp" position="-0.8 1.8 -1.5" radius="0.15" color="#555"></a-sphere>
-    <!-- demo hazard zone: walk into it to test hitboxes -->
-    <a-box class="hazard" position="0 1 -5" depth="1.5" height="2" width="1.5"
-           material="color: red; transparent: true; opacity: 0.35"></a-box>
+    <!-- ================= ZONE 1: SCAFFOLD / FALL PROTECTION (z -11..-24) ===== -->
+    <a-entity id="zone-fall">
+      <!-- sign -->
+      <a-box position="1.8 1.2 -3" width="1.6" height="1" depth="0.08" color="#f4d03f"></a-box>
+      <a-entity position="1.8 1.2 -2.95"
+                text="value: ZONE 1\nFALL PROTECTION\nAnchor harness, cross plank; align: center; color: #222; width: 3"></a-entity>
 
-    <script>
-      // wire the test lever to the lamp
-      document.querySelector('#lever').addEventListener('used', () => {
-        const lamp = document.querySelector('#lamp');
-        const on = lamp.getAttribute('color') === '#f1c40f';
-        lamp.setAttribute('color', on ? '#555' : '#f1c40f');
-      });
-    </script>
+      <!-- access ramp up -->
+      <a-box class="walkable" position="0 1.5 -7.5" rotation="23.2 0 0"
+             width="1.8" height="0.18" depth="7.7" color="#9aa0a6" shadow="cast: true"></a-box>
+
+      <!-- main platform y=3 -->
+      <a-box class="walkable" position="0 2.95 -14" width="4.4" height="0.2" depth="6.4"
+             color="#b0793f" shadow="cast: true"></a-box>
+      <!-- posts -->
+      <a-cylinder position="-2.1 1.5 -11.2" radius="0.09" height="4.6" color="#7d8a94"></a-cylinder>
+      <a-cylinder position="2.1 1.5 -11.2" radius="0.09" height="4.6" color="#7d8a94"></a-cylinder>
+      <a-cylinder position="-2.1 1.5 -16.8" radius="0.09" height="4.6" color="#7d8a94"></a-cylinder>
+      <a-cylinder position="2.1 1.5 -16.8" radius="0.09" height="4.6" color="#7d8a94"></a-cylinder>
+      <!-- guardrails: east + west only. South edge is OPEN (the hazard) -->
+      <a-box position="-2.1 3.6 -14" width="0.06" height="0.06" depth="6.2" color="#e74c3c"></a-box>
+      <a-box position="-2.1 4.1 -14" width="0.06" height="0.06" depth="6.2" color="#e74c3c"></a-box>
+      <a-box position="2.1 3.6 -14" width="0.06" height="0.06" depth="6.2" color="#e74c3c"></a-box>
+      <a-box position="2.1 4.1 -14" width="0.06" height="0.06" depth="6.2" color="#e74c3c"></a-box>
+
+      <!-- harness anchor point -->
+      <a-torus id="anchor" class="interactable" usable position="1.9 3.9 -11.6"
+               radius="0.22" radius-tubular="0.05" color="#f1c40f"></a-torus>
+      <a-entity position="1.9 4.4 -11.6"
+                text="value: ANCHOR POINT\n(click / trigger); align: center; color: #fff; width: 2.5"></a-entity>
+
+      <!-- the plank across the void -->
+      <a-box class="walkable" position="0 2.95 -19" width="0.5" height="0.15" depth="4.2"
+             color="#c9a86b" shadow="cast: true"></a-box>
+
+      <!-- flag platform + flag -->
+      <a-box class="walkable" position="0 2.95 -22.3" width="2.6" height="0.2" depth="2.6"
+             color="#b0793f" shadow="cast: true"></a-box>
+      <a-cylinder position="0 1.5 -22.9" radius="0.09" height="3" color="#7d8a94"></a-cylinder>
+      <a-cylinder position="0 4 -23.2" radius="0.05" height="2" color="#666"></a-cylinder>
+      <a-box position="0.35 4.6 -23.2" width="0.7" height="0.45" depth="0.03" color="#2ecc71"></a-box>
+
+      <!-- descent ramp back to ground -->
+      <a-box class="walkable" position="0 1.5 -26.9" rotation="-24.4 0 0"
+             width="1.8" height="0.18" depth="7.4" color="#9aa0a6"></a-box>
+    </a-entity>
+
+    <!-- ================= ZONE 2: SUBSTATION / LOTO (z -30..-38) ============ -->
+    <a-entity id="zone-loto">
+      <a-box position="1.8 1.2 -29" width="1.6" height="1" depth="0.08" color="#f4d03f"></a-box>
+      <a-entity position="1.8 1.2 -28.95"
+                text="value: ZONE 2\nLOCKOUT / TAGOUT\nBreaker, tag, then panel; align: center; color: #222; width: 3"></a-entity>
+
+      <!-- machine housing -->
+      <a-box position="-2 1.1 -33" width="2.2" height="2.2" depth="2.2"
+             color="#5d6d7e" shadow="cast: true"></a-box>
+      <a-box position="-2 2.32 -33" width="2.3" height="0.15" depth="2.3" color="#f1c40f"></a-box>
+      <!-- spinning gear on the east face -->
+      <a-entity id="gear" position="-0.82 1.45 -32.4">
+        <a-box width="1.3" height="0.22" depth="0.08" color="#2c3e50"></a-box>
+        <a-box width="0.22" height="1.3" depth="0.08" color="#2c3e50"></a-box>
+        <a-cylinder rotation="90 0 0" radius="0.12" height="0.12" color="#95a5a6"></a-cylinder>
+      </a-entity>
+      <!-- sparks (hidden until an accident) -->
+      <a-entity id="sparks" position="-0.8 1.4 -32.4" visible="false">
+        <a-box position="0.2 0.3 0.1" width="0.08" height="0.08" depth="0.08" color="#ffee58"
+               animation="property: position; to: 0.6 -0.4 0.4; dur: 300; loop: true"></a-box>
+        <a-box position="-0.15 0.2 0.15" width="0.06" height="0.06" depth="0.06" color="#ffca28"
+               animation="property: position; to: -0.5 -0.5 0.5; dur: 250; loop: true"></a-box>
+        <a-box position="0 0.4 0.2" width="0.07" height="0.07" depth="0.07" color="#fff176"
+               animation="property: position; to: 0.1 -0.6 0.6; dur: 350; loop: true"></a-box>
+      </a-entity>
+      <!-- service panel on the east face -->
+      <a-plane id="service-panel" class="interactable" usable rotation="0 90 0"
+               position="-0.87 1 -33.9" width="0.85" height="0.85" color="#212f3c"></a-plane>
+      <a-entity position="-0.8 0.4 -33.9" rotation="0 90 0"
+                text="value: SERVICE PANEL; align: center; color: #fff; width: 2"></a-entity>
+
+      <!-- breaker pole -->
+      <a-cylinder position="2 1 -33" radius="0.07" height="2" color="#616a6b"></a-cylinder>
+      <a-box id="breaker" class="interactable" usable position="2 1.55 -33"
+             width="0.5" height="0.7" depth="0.3" color="#c0392b"></a-box>
+      <a-entity position="2 2.2 -32.8"
+                text="value: BREAKER; align: center; color: #fff; width: 2.5"></a-entity>
+      <!-- tag hook + hidden tag -->
+      <a-cylinder id="tag-hook" class="interactable" usable position="2 0.95 -32.8"
+                  rotation="90 0 0" radius="0.06" height="0.15" color="#d5d8dc"></a-cylinder>
+      <a-box id="tag" visible="false" position="2 0.72 -32.75" rotation="8 0 0"
+             width="0.22" height="0.34" depth="0.02" color="#e74c3c"></a-box>
+      <a-entity position="2 0.55 -32.6"
+                text="value: TAG HOOK; align: center; color: #fff; width: 1.8"></a-entity>
+
+      <!-- fence posts -->
+      <a-cylinder position="-4.5 0.8 -30.5" radius="0.05" height="1.6" color="#909497"></a-cylinder>
+      <a-cylinder position="-4.5 0.8 -35.5" radius="0.05" height="1.6" color="#909497"></a-cylinder>
+      <a-box position="-4.5 1.4 -33" width="0.04" height="0.04" depth="5" color="#909497"></a-box>
+    </a-entity>
+
+    <!-- ================= ZONE 3: TRENCH (z -52..-58) ======================= -->
+    <a-entity id="zone-trench">
+      <a-box position="1.8 1.2 -47" width="1.6" height="1" depth="0.08" color="#f4d03f"></a-box>
+      <a-entity position="1.8 1.2 -46.95"
+                text="value: ZONE 3\nTRENCH SAFETY\nShore it before entering; align: center; color: #222; width: 3"></a-entity>
+
+      <!-- trench floor + walls -->
+      <a-plane class="walkable" rotation="-90 0 0" position="0 -2 -55"
+               width="4" height="6" color="#6e5f48"></a-plane>
+      <a-box id="trench-wall-e" position="2.15 -1 -55" width="0.3" height="2" depth="6" color="#75664d"></a-box>
+      <a-box id="trench-wall-w" position="-2.15 -1 -55" width="0.3" height="2" depth="6" color="#75664d"></a-box>
+      <a-box position="0 -1 -58.15" width="4.6" height="2" depth="0.3" color="#75664d"></a-box>
+      <a-box position="-1.45 -1 -51.85" width="1.7" height="2" depth="0.3" color="#75664d"></a-box>
+      <a-box position="1.45 -1 -51.85" width="1.7" height="2" depth="0.3" color="#75664d"></a-box>
+      <!-- entry ramp down -->
+      <a-box class="walkable" position="0 -1 -53.5" rotation="-33.7 0 0"
+             width="1.3" height="0.15" depth="3.7" color="#c9a86b"></a-box>
+
+      <!-- shoring braces (hidden until deployed) -->
+      <a-box class="shore" visible="false" position="1.85 -1 -53.5" width="0.12" height="1.9" depth="2.4" color="#c9a86b"></a-box>
+      <a-box class="shore" visible="false" position="1.85 -1 -56.5" width="0.12" height="1.9" depth="2.4" color="#c9a86b"></a-box>
+      <a-box class="shore" visible="false" position="-1.85 -1 -53.5" width="0.12" height="1.9" depth="2.4" color="#c9a86b"></a-box>
+      <a-box class="shore" visible="false" position="-1.85 -1 -56.5" width="0.12" height="1.9" depth="2.4" color="#c9a86b"></a-box>
+      <a-cylinder class="shore" visible="false" position="0 -0.6 -53.5" rotation="0 0 90" radius="0.07" height="3.6" color="#a9a9a9"></a-cylinder>
+      <a-cylinder class="shore" visible="false" position="0 -0.6 -56.5" rotation="0 0 90" radius="0.07" height="3.6" color="#a9a9a9"></a-cylinder>
+
+      <!-- shoring stack (usable) -->
+      <a-box id="shore-stack" class="interactable" usable position="3.4 0.35 -50"
+             width="1" height="0.7" depth="2.4" color="#c9a86b" shadow="cast: true"></a-box>
+      <a-entity position="3.4 1.1 -49.9"
+                text="value: SHORING STACK\n(use to deploy); align: center; color: #fff; width: 2.5"></a-entity>
+
+      <!-- valve at the trench end -->
+      <a-torus id="valve" class="interactable" usable position="0 -1.2 -57.7"
+               radius="0.3" radius-tubular="0.05" color="#e74c3c"></a-torus>
+      <a-cylinder position="0 -1.7 -57.9" rotation="90 0 0" radius="0.12" height="1.5" color="#7f8c8d"></a-cylinder>
+
+      <!-- spoil piles -->
+      <a-box position="-3.4 0.4 -53" rotation="0 20 0" width="1.6" height="0.9" depth="2.5" color="#7a6a50"></a-box>
+      <a-box position="-3.2 0.3 -56.5" rotation="0 -15 0" width="1.4" height="0.7" depth="2" color="#7a6a50"></a-box>
+    </a-entity>
+
+    <!-- ================= SITE DRESSING ==================================== -->
+    <a-cone position="3 0.35 -10" radius-bottom="0.28" radius-top="0.03" height="0.7" color="#e67e22"></a-cone>
+    <a-cone position="-3.2 0.35 -20" radius-bottom="0.28" radius-top="0.03" height="0.7" color="#e67e22"></a-cone>
+    <a-cone position="3.4 0.35 -40" radius-bottom="0.28" radius-top="0.03" height="0.7" color="#e67e22"></a-cone>
+    <a-cone position="-3 0.35 -45" radius-bottom="0.28" radius-top="0.03" height="0.7" color="#e67e22"></a-cone>
+    <a-cylinder position="-5 0.55 -12" radius="0.4" height="1.1" color="#2471a3"></a-cylinder>
+    <a-cylinder position="-5.6 0.55 -12.6" radius="0.4" height="1.1" color="#b03a2e"></a-cylinder>
+    <a-box position="6 0.5 -25" rotation="0 30 0" width="1" height="1" depth="1" color="#873600"></a-box>
+    <!-- crane silhouette -->
+    <a-box position="-18 9 -45" width="1.2" height="18" depth="1.2" color="#d4ac0d"></a-box>
+    <a-box position="-11 17.5 -45" width="16" height="0.8" depth="0.8" color="#d4ac0d"></a-box>
+    <a-cylinder position="-5 14.5 -45" radius="0.03" height="6" color="#333"></a-cylinder>
+    <a-box position="-5 11.2 -45" width="1.4" height="0.7" depth="1" color="#7f8c8d"></a-box>
+    <!-- distant buildings -->
+    <a-box position="25 6 -60" width="10" height="12" depth="10" color="#aab7b8"></a-box>
+    <a-box position="-30 4 -70" width="12" height="8" depth="10" color="#99a3a4"></a-box>
   </a-scene>
 </body>
 </html>

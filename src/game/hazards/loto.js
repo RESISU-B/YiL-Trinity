@@ -55,7 +55,8 @@ AFRAME.registerComponent('hazard-loto', {
         sparks.setAttribute('visible', true);
         setTimeout(() => { sparks.setAttribute('visible', false); spin(true); }, 2000);
         scene.emit('fail', {
-          text: 'The machine was LIVE — it activated with your hands inside. Always lock out first.'
+          text: 'The machine was LIVE — it activated with your hands inside. Always lock out first.',
+          respawn: '0 0 -28'
         });
       } else if (!GAME.tagged) {
         // no tag: someone flips it back on
@@ -65,7 +66,8 @@ AFRAME.registerComponent('hazard-loto', {
         sparks.setAttribute('visible', true);
         setTimeout(() => sparks.setAttribute('visible', false), 2000);
         scene.emit('fail', {
-          text: 'No tag on the breaker — a coworker re-energized it while you were inside. Tag out!'
+          text: 'No tag on the breaker — a coworker re-energized it while you were inside. Tag out!',
+          respawn: '0 0 -28'
         });
         scene.emit('hud-update');
       } else {

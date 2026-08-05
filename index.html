@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>YiL Trinity — Site Safety VR</title>
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.5.4/dist/aframe-extras.min.js"></script>
+  <script src="https://unpkg.com/aframe-aabb-collider-component@3.2.0/dist/aframe-aabb-collider-component.min.js"></script>
+  <script src="src/components/player-hitboxes.js"></script>
+  <script src="src/components/usable.js"></script>
+  <script src="src/game/tasks.js"></script>
+  <script src="src/game/hazards.js"></script>
+</head>
+<body>
+  <a-scene>
+    <a-sky color="#87CEEB"></a-sky>
+
+    <!-- Empty world: ground + a few orientation markers -->
+    <a-plane rotation="-90 0 0" width="100" height="100" color="#8a7f6a"></a-plane>
+    <a-box position="0 0.5 -8" depth="1" height="1" width="1" color="#c0392b"></a-box>
+    <a-cylinder position="6 1 -4" radius="0.3" height="2" color="#2c3e50"></a-cylinder>
+    <a-cylinder position="-6 1 -4" radius="0.3" height="2" color="#2c3e50"></a-cylinder>
+
+    <a-entity light="type: ambient; intensity: 0.6"></a-entity>
+    <a-entity light="type: directional; intensity: 0.8" position="1 4 2"></a-entity>
+
+    <!-- ======== PLAYER RIG ======== -->
+    <!-- movement-controls (aframe-extras): left thumbstick in VR, WASD on desktop -->
+    <a-entity id="rig" movement-controls="speed: 0.25; fly: false" player-hitboxes>
+      <a-entity id="head" camera look-controls position="0 1.6 0">
+        <!-- desktop fallback: mouse click to interact/use -->
+        <a-entity cursor="rayOrigin: mouse" raycaster="objects: .interactable"></a-entity>
+        <!-- red flash on hazard hit -->
+        <a-plane damage-flash position="0 0 -0.3" width="1" height="1"
+                 material="color: red; transparent: true; opacity: 0; depthTest: false"></a-plane>
+      </a-entity>
+
+      <!-- Hands: grip = grab, trigger = use (see hand-interactor in usable.js) -->
+      <a-entity id="handL" hand-controls="hand: left" hand-interactor></a-entity>
+      <a-entity id="handR" hand-controls="hand: right" hand-interactor></a-entity>
+    </a-entity>
+
+    <!-- ======== TEST OBJECTS (delete later) ======== -->
+    <!-- grabbable crate: grip near it in VR to pick up -->
+    <a-box class="interactable" grabbable hoverable usable
+           position="0.6 1.1 -1.5" depth="0.3" height="0.3" width="0.3" color="#e67e22"></a-box>
+    <!-- usable lever: trigger in VR / click on desktop toggles the lamp -->
+    <a-box id="lever" class="interactable" hoverable usable
+           position="-0.8 1 -1.5" depth="0.2" height="0.4" width="0.2" color="#27ae60"></a-box>
+    <a-sphere id="lamp" position="-0.8 1.8 -1.5" radius="0.15" color="#555"></a-sphere>
+    <!-- demo hazard zone: walk into it to test hitboxes -->
+    <a-box class="hazard" position="0 1 -5" depth="1.5" height="2" width="1.5"
+           material="color: red; transparent: true; opacity: 0.35"></a-box>
+
+    <script>
+      // wire the test lever to the lamp
+      document.querySelector('#lever').addEventListener('used', () => {
+        const lamp = document.querySelector('#lamp');
+        const on = lamp.getAttribute('color') === '#f1c40f';
+        lamp.setAttribute('color', on ? '#555' : '#f1c40f');
+      });
+    </script>
+  </a-scene>
+</body>
+</html>

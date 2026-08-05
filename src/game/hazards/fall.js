@@ -35,7 +35,7 @@ AFRAME.registerComponent('hazard-fall', {
       if (p.z < -9 && p.z > -26 && e.detail.distance > 2 && !GAME.anchored) {
         scene.emit('fail', {
           text: 'You fell from the scaffold with NO harness. At this height that is fatal.',
-          respawn: '0 0 -5'
+          respawn: '0 6.1 -12.5'
         });
       }
     });
